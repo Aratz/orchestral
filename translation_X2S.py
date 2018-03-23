@@ -37,7 +37,7 @@ particle_pos = {
                    ]
             ]
             # Only keep particles close to the boundary between the two cells
-            if (abs(np.dot(diff_pos, (pos + cell_pos[cell_id] - cell_sizes[cell_id]/2 ) - mid_pos))
+            if (abs(np.dot(diff_pos, (pos + cell_pos[cell_id] - cell_sizes[cell_id]/2) - mid_pos))
                 < network[cell_id]["epsilon"]*network[cell_id]["size"]*abs(sum(diff_pos)))
                 # Discard particles close to edges and corners
                 and ((pos < network[cell_id]["epsilon"]*cell_sizes[cell_id]).sum()
