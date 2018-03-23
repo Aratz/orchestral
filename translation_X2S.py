@@ -21,26 +21,29 @@ mid_pos = diff_pos / 2
 
 particle_pos = {
     cell_id:
-    [(sid, (pos + cell_pos[cell_id] - cell_sizes[cell_id]/2).tolist())
-        for sid, pos
-        in [(int(sid), np.array([float(x), float(y), float(z)]))
-            for _, sid, x, y, z
-            in [line.split()
-                for line
-                in open(
-                    # Read output files from cell simulations
-                    data_folder + '/cell-{}-{}.out'.format(step, cell_id), 'r'
-                    ).read().split('Z\n')[-1].split('\n')
-                if line
-               ]
+    {
+        "position":cell_pos[cell_id].tolist(),
+        "particles":[(sid, (pos + cell_pos[cell_id] - cell_sizes[cell_id]/2).tolist())
+            for sid, pos
+            in [(int(sid), np.array([float(x), float(y), float(z)]))
+                for _, sid, x, y, z
+                in [line.split()
+                    for line
+                    in open(
+                        # Read output files from cell simulations
+                        data_folder + '/cell-{}-{}.out'.format(step, cell_id), 'r'
+                        ).read().split('Z\n')[-1].split('\n')
+                    if line
+                   ]
+            ]
+            # Only keep particles close to the boundary between the two cells
+            if (abs(np.dot(diff_pos, (pos + cell_pos[cell_id] - cell_sizes[cell_id]/2 ) - mid_pos))
+                < network[cell_id]["epsilon"]*network[cell_id]["size"]*abs(sum(diff_pos)))
+                # Discard particles close to edges and corners
+                and ((pos < network[cell_id]["epsilon"]*cell_sizes[cell_id]).sum()
+                    + (pos > (1-network[cell_id]["epsilon"])*cell_sizes[cell_id]).sum()) == 1
         ]
-        # Only keep particles close to the boundary between the two cells
-        if (abs(np.dot(diff_pos, (pos + cell_pos[cell_id] - cell_sizes[cell_id]/2 ) - mid_pos))
-            < network[cell_id]["epsilon"]*network[cell_id]["size"]*abs(sum(diff_pos)))
-            # Discard particles close to edges and corners
-            and ((pos < network[cell_id]["epsilon"]*cell_sizes[cell_id]).sum()
-                + (pos > (1-network[cell_id]["epsilon"])*cell_sizes[cell_id]).sum()) == 1
-    ]
+    }
     for cell_id in cell_ids
 }
 
