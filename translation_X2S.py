@@ -2,20 +2,20 @@ import sys
 import json
 import numpy as np
 
-step = int(sys.argv[1])
-
-with open(sys.argv[2], 'r') as f:
+with open(sys.argv[1], 'r') as f:
     network = json.load(f)
 
-cell_output_files = sys.argv[3:]
+cell_output_files = sys.argv[2:-1]
+
+signaling_input_file = sys.argv[-1]
 
 cell_ids = [filename.split('/')[-1][:-4].split('-')[-1]
-        for filename in cell_output_files
+        for filename in cell_output_files]
 
 cell_pos = {cell_id:np.array(network[cell_id]["position"])
         for cell_id in cell_ids}
 
-cell_sizes = {cell_id:network[cell_id]["size"] for cell_id in cell_ids}
+cell_sizes = {cell_id:network[cell_id]["wsize"] for cell_id in cell_ids}
 
 diff_pos = cell_pos[cell_ids[1]] - cell_pos[cell_ids[0]]
 mid_pos = (cell_pos[cell_ids[1]] + cell_pos[cell_ids[0]]) / 2
@@ -36,7 +36,7 @@ input_data = {
                     for line
                     in open(
                         # Read output files from cell simulations
-                        data_folder + '/cell-{}-{}.out'.format(step, cell_id), 'r'
+                        cell_file, 'r'
                         ).read().split('Z\n')[-1].split('\n')
                     if line
                    ]
@@ -49,9 +49,9 @@ input_data = {
                     + (pos > (1-network[cell_id]["epsilon"])*cell_sizes[cell_id]).sum()) == 1
                 and sid == 3 # Only keep delta molecules
         ]
-            for cell_id in cell_ids
+            for cell_file, cell_id in zip(cell_output_files, cell_ids)
             ], [])
 }
 
-with open(data_folder + '/signaling-{}-({},{}).in'.format(step, *(sorted(cell_ids))), 'w') as f:
+with open(signaling_input_file, 'w') as f:
     json.dump(input_data, f, indent=True)
