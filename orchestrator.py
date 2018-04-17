@@ -4,6 +4,9 @@ import dask
 import string
 import functools
 import subprocess
+from dask.threaded import get
+from dask.diagnostics import ProgressBar
+ProgressBar().register()
 
 with open(sys.argv[1], 'r') as f:
     config = json.load(f)
@@ -26,7 +29,6 @@ def run_translation_X2S(input_files, output_file, **kwargs):
         cell_output_files=" ".join(input_files),
         signaling_input_file=output_file,
         **kwargs).split())
-    print(output_file)
     return output_file
 
 def run_signaling(input_file, output_file, **kwargs):
@@ -120,7 +122,5 @@ for step in range(1, config["n_steps"] + 1):
                     ),
                 config["data_folder"] + "/cell-{}-{}.out".format(step, cell_id),
                 input_files)
-
-from dask.threaded import get
 
 get(dag, [config["data_folder"] + "/cell-{}-{}.out".format(config["n_steps"], cell_id) for cell_id in network])
