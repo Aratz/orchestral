@@ -17,27 +17,31 @@ def run_cell(input_file, output_file, **kwargs):
     subprocess.call(config["cell_executable"].format(
         input_file=input_file,
         output_file=output_file,
-        **kwargs))
+        **kwargs).split(),
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return output_file
 
 def run_translation_X2S(input_files, output_file, **kwargs):
     subprocess.call(config["translation_X2S"].format(
-        cell_output_files=" ".join(input_files)
-        **kwargs))
+        cell_output_files=" ".join(input_files),
+        signaling_input_file=output_file,
+        **kwargs).split())
+    print(output_file)
     return output_file
 
 def run_signaling(input_file, output_file, **kwargs):
     subprocess.call(config["signaling_executable"].format(
         input_file=input_file,
         output_file=output_file,
-        **kwargs))
+        **kwargs).split())
     return output_file
 
-def run_translation_X2S(target_cell_output_file, signaling_files, output_file, **kwargs):
+def run_translation_S2X(target_cell_output_file, signaling_files, output_file, **kwargs):
     subprocess.call(config["translation_S2X"].format(
         target_cell_output_file=target_cell_output_file,
-        signaling_files=" ".join(signaling_files)
-        **kwargs))
+        signaling_files=" ".join(signaling_files),
+        target_cell_input_file=output_file,
+        **kwargs).split())
     return output_file
 
 
@@ -74,7 +78,6 @@ for step in range(1, config["n_steps"] + 1):
             dag[output_file] = (
                     functools.partial(
                         run_translation_X2S,
-                        step=step,
                         output_file=output_file,
                         network_file=network_file,
                     ),
@@ -111,17 +114,12 @@ for step in range(1, config["n_steps"] + 1):
         output_file = config["data_folder"] + "/cell-{}-{}.in".format(step + 1, cell_id)
         dag[output_file] = (
                 functools.partial(
-                    run_translation_X2S,
-                    step=step,
+                    run_translation_S2X,
                     output_file=output_file,
                     network_file=network_file
                     ),
                 config["data_folder"] + "/cell-{}-{}.out".format(step, cell_id),
                 input_files)
-
-#import pprint
-#pp = pprint.PrettyPrinter(indent=4)
-#pp.pprint(dag)
 
 from dask.threaded import get
 
