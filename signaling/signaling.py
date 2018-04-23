@@ -26,8 +26,8 @@ with open(input_file, 'r') as f:
 cids = list(data["cells"].keys())
 inverted_cid = dict(zip(cids, reversed(cids)))
 
-diff_pos = np.array(data["cells"][cids[0]]) - np.array(data["cells"][cids[1]])
-mid_pos = (np.array(data["cells"][cids[0]]) + np.array(data["cells"][cids[1]]))/2
+diff_pos = np.array(data["cells"][cids[1]]) - np.array(data["cells"][cids[0]])
+mid_pos = diff_pos / 2
 
 
 new_positions = {
@@ -36,9 +36,10 @@ new_positions = {
             (
                 inverted_cid[cid],
                 "Notch",
-                (np.array(pos) - (np.dot((np.array(pos) - mid_pos), diff_pos)
-                        /np.linalg.norm(diff_pos)**2)*diff_pos).tolist(),
-                    # Absolute position
+                (   np.array(pos) - 2*(np.dot(np.array(pos) - mid_pos, diff_pos/np.linalg.norm(diff_pos)**2)*diff_pos) - diff_pos
+                    if cid == cids[0] else
+                    np.array(pos) + diff_pos - 2*(np.dot(np.array(pos) + mid_pos, diff_pos/np.linalg.norm(diff_pos)**2)*diff_pos)
+                    ).tolist()
             ) if npr.random() < 1 - np.exp(-CROSSING_RATE*end_time) else (
                 cid,
                 species,

@@ -50,7 +50,7 @@ target_cell = [(
                ]
         ]
         if not any([
-            abs(np.dot(diff_pos[cell_id], (pos + cell_pos[target_cell_id] - cell_sizes[target_cell_id]/2) - mid_pos[cell_id]))
+            abs(np.dot(diff_pos[cell_id], pos + (cell_pos[target_cell_id] - cell_sizes[target_cell_id]/2 - mid_pos[cell_id])))
             < network[target_cell_id]["epsilon"]*cell_sizes[target_cell_id]*abs(sum(diff_pos[cell_id]))
             and ((pos < network[target_cell_id]["epsilon"]*cell_sizes[target_cell_id]).sum()
                 + (pos > (1-network[target_cell_id]["epsilon"])*cell_sizes[target_cell_id]).sum()) == 1
@@ -69,7 +69,7 @@ for signaling_file in signaling_files:
             target_cell.append((
                     cid,
                     3 if species == "Delta" else 4,
-                    pos - cell_pos[target_cell_id] + cell_sizes[target_cell_id]/2,
+                    np.array(pos) + cell_sizes[target_cell_id]/2,
                     ))
 
 with open(target_cell_input_file, 'w') as f:
