@@ -163,7 +163,7 @@ from dask.diagnostics import Profiler
 with Profiler() as prof:
     get(dag, [config["data_folder"] + "/cell-{}-{}.out".format(config["n_steps"], cell_id) for cell_id in network])
 
-with open('profiling.json', 'w') as f:
+with open(sys.argv[3], 'w') as f:
     json.dump(
             [{
                 key: value
