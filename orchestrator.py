@@ -4,9 +4,14 @@ import dask
 import string
 import functools
 import subprocess
+from retrying import retry
 from dask.threaded import get
 from dask.diagnostics import ProgressBar
+import logging
+
+logging.basicConfig(filename='orchestral.log',level=logging.DEBUG)
 ProgressBar().register()
+TIMEOUT = 60
 
 with open(sys.argv[1], 'r') as f:
     config = json.load(f)
@@ -16,12 +21,33 @@ with open(network_file, 'r') as f:
     network = json.load(f)
 
 
+@retry(stop_max_attempt_number=3)
 def run_cell(input_file, output_file, **kwargs):
-    subprocess.call(config["cell_executable"].format(
-        input_file=input_file,
-        output_file=output_file,
-        **kwargs).split(),
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    for _ in range(3):
+        command_line = config["cell_executable"].format(
+            input_file=input_file,
+            output_file=output_file,
+            **kwargs).split()
+        proc = subprocess.Popen(command_line,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            outs, errs = proc.communicate(timeout=TIMEOUT)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            logging.error("command line: {}\n Timeout".format(
+                ' '.join(command_line)))
+            kwargs['seed'] += 1
+        else:
+            break
+    else:
+        raise subprocess.TimeoutExpired(command_line, TIMEOUT)
+    if not proc.returncode:
+        logging.debug("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), proc.returncode))
+    else:
+        logging.error("command line: {}\n stdout: {}\n stderr: {}".format(
+            ' '.join(command_line), outs, errs))
+        raise Exception("GFRD failure")
     return output_file
 
 def run_translation_X2S(input_files, output_file, **kwargs):
