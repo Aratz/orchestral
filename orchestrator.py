@@ -51,25 +51,34 @@ def run_cell(input_file, output_file, **kwargs):
     return output_file
 
 def run_translation_X2S(input_files, output_file, **kwargs):
-    subprocess.call(config["translation_X2S"].format(
+    command_line = config["translation_X2S"].format(
         cell_output_files=" ".join(input_files),
         signaling_input_file=output_file,
-        **kwargs).split())
+        **kwargs).split()
+    return_code = subprocess.call(command_line)
+    logging.debug("command line: {}\nreturn code: {}".format(
+        ' '.join(command_line), return_code))
     return output_file
 
 def run_signaling(input_file, output_file, **kwargs):
-    subprocess.call(config["signaling_executable"].format(
+    command_line = config["signaling_executable"].format(
         input_file=input_file,
         output_file=output_file,
-        **kwargs).split())
+        **kwargs).split()
+    return_code = subprocess.call(command_line)
+    logging.debug("command line: {}\nreturn code: {}".format(
+        ' '.join(command_line), return_code))
     return output_file
 
 def run_translation_S2X(target_cell_output_file, signaling_files, output_file, **kwargs):
-    subprocess.call(config["translation_S2X"].format(
+    command_line = config["translation_S2X"].format(
         target_cell_output_file=target_cell_output_file,
         signaling_files=" ".join(signaling_files),
         target_cell_input_file=output_file,
-        **kwargs).split())
+        **kwargs).split()
+    return_code = subprocess.call(command_line)
+    logging.debug("command line: {}\nreturn code: {}".format(
+        ' '.join(command_line), return_code))
     return output_file
 
 
