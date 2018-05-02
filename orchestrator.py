@@ -9,9 +9,6 @@ from dask.threaded import get
 from dask.diagnostics import ProgressBar
 import logging
 
-logging.basicConfig(filename='orchestral.log',level=logging.DEBUG)
-ProgressBar().register()
-TIMEOUT = 60
 
 with open(sys.argv[1], 'r') as f:
     config = json.load(f)
@@ -20,6 +17,9 @@ network_file = sys.argv[2]
 with open(network_file, 'r') as f:
     network = json.load(f)
 
+logging.basicConfig(filename=config["data_folder"] + 'orchestral.log', level=logging.DEBUG)
+#ProgressBar().register()
+TIMEOUT = 60
 
 @retry(stop_max_attempt_number=3)
 def run_cell(input_file, output_file, **kwargs):
