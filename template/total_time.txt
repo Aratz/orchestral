@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "orchestrator.py", line 164, in <module>
+    get(dag, [config["data_folder"] + "/cell-{}-{}.out".format(config["n_steps"], cell_id) for cell_id in network])
+  File "/home/adrienc/lib/anaconda2/envs/orchestral/lib/python3.5/site-packages/dask/threaded.py", line 76, in get
+    **kwargs)
+  File "/home/adrienc/lib/anaconda2/envs/orchestral/lib/python3.5/site-packages/dask/async.py", line 525, in get_async
+    raise(remote_exception(res, tb))
+dask.async.Exception: GFRD failure
+
+Traceback
+---------
+  File "/home/adrienc/lib/anaconda2/envs/orchestral/lib/python3.5/site-packages/dask/async.py", line 291, in execute_task
+    result = _execute_task(task, data)
+  File "/home/adrienc/lib/anaconda2/envs/orchestral/lib/python3.5/site-packages/dask/async.py", line 272, in _execute_task
+    return func(*args2)
+  File "/home/adrienc/lib/anaconda2/envs/orchestral/lib/python3.5/site-packages/retrying.py", line 49, in wrapped_f
+    return Retrying(*dargs, **dkw).call(f, *args, **kw)
+  File "/home/adrienc/lib/anaconda2/envs/orchestral/lib/python3.5/site-packages/retrying.py", line 212, in call
+    raise attempt.get()
+  File "/home/adrienc/lib/anaconda2/envs/orchestral/lib/python3.5/site-packages/retrying.py", line 247, in get
+    six.reraise(self.value[0], self.value[1], self.value[2])
+  File "/home/adrienc/lib/anaconda2/envs/orchestral/lib/python3.5/site-packages/six.py", line 686, in reraise
+    raise value
+  File "/home/adrienc/lib/anaconda2/envs/orchestral/lib/python3.5/site-packages/retrying.py", line 200, in call
+    attempt = Attempt(fn(*args, **kwargs), attempt_number, False)
+  File "orchestrator.py", line 50, in run_cell
+    raise Exception("GFRD failure")
+
+
+real	22m33.505s
+user	69m9.986s
+sys	12m28.595s
