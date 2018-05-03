@@ -1,9 +1,0 @@
-{
-    "cell_executable": "modern_egfrd/build/bin/RunGfrd --custom -seed {seed} -e {end_time} -wsize {wsize} -in {input_file} -out {output_file}",
-    "signaling_executable": "python3 signaling/signaling.py -seed {seed} -e {end_time} -in {input_file} -out {output_file}",
-    "translation_X2S":"python3 translation_X2S.py {network_file} {cell_output_files} {signaling_input_file}",
-    "translation_S2X":"python3 translation_S2X.py {network_file} {target_cell_output_file} {signaling_files} {target_cell_input_file}",
-    "network_file":"network.json",
-    "data_folder":"20/data/",
-    "n_steps":100
-}
