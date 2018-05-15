@@ -17,7 +17,7 @@ network_file = sys.argv[2]
 with open(network_file, 'r') as f:
     network = json.load(f)
 
-logging.basicConfig(filename=config["data_folder"] + 'orchestral.log', level=logging.DEBUG)
+logging.basicConfig(filename=sys.argv[3], level=logging.DEBUG)
 #ProgressBar().register()
 TIMEOUT = 60
 
