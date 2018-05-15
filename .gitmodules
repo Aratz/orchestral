@@ -1,0 +1,3 @@
+[submodule "modern_egfrd"]
+	path = modern_egfrd
+	url = https://github.com/Aratz/modern_egfrd.git
