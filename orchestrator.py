@@ -4,7 +4,6 @@ import dask
 import string
 import functools
 import subprocess
-from retrying import retry
 from dask.diagnostics import ProgressBar
 
 from distributed import Client
@@ -22,7 +21,6 @@ with open(network_file, 'r') as f:
 
 TIMEOUT = 60
 
-@retry(stop_max_attempt_number=3)
 def run_cell(input_file, output_file, **kwargs):
     for _ in range(3):
         command_line = config["cell_executable"].format(
@@ -150,7 +148,7 @@ for step in range(1, config["n_steps"] + 1):
 from dask.diagnostics import Profiler
 
 with Profiler() as prof:
-    get(dag, [config["data_folder"] + "/cell-{}-{}.out".format(config["n_steps"], cell_id) for cell_id in network])
+    get(dag, [config["data_folder"] + "/cell-{}-{}.out".format(config["n_steps"], cell_id) for cell_id in network], retries=3)
 
 with open(sys.argv[4], 'w') as f:
     json.dump(
