@@ -5,9 +5,13 @@ import string
 import functools
 import subprocess
 from retrying import retry
-from dask.threaded import get
 from dask.diagnostics import ProgressBar
 import logging
+
+from distributed import Client
+
+client = Client('localhost:8786')
+get = client.get
 
 
 with open(sys.argv[1], 'r') as f:
