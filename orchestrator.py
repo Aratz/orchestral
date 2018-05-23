@@ -6,7 +6,6 @@ import functools
 import subprocess
 from retrying import retry
 from dask.diagnostics import ProgressBar
-import logging
 
 from distributed import Client
 
@@ -21,8 +20,6 @@ network_file = sys.argv[2]
 with open(network_file, 'r') as f:
     network = json.load(f)
 
-logging.basicConfig(filename=sys.argv[3], level=logging.DEBUG)
-#ProgressBar().register()
 TIMEOUT = 60
 
 @retry(stop_max_attempt_number=3)
@@ -38,19 +35,14 @@ def run_cell(input_file, output_file, **kwargs):
             outs, errs = proc.communicate(timeout=TIMEOUT)
         except subprocess.TimeoutExpired:
             proc.kill()
-            logging.error("command line: {}\n Timeout".format(
-                ' '.join(command_line)))
             kwargs['seed'] += 1
         else:
             break
     else:
         raise subprocess.TimeoutExpired(command_line, TIMEOUT)
-    if not proc.returncode:
-        logging.debug("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), proc.returncode))
+    if not returncode:
+        pass
     else:
-        logging.error("command line: {}\n stdout: {}\n stderr: {}".format(
-            ' '.join(command_line), outs, errs))
         raise Exception("GFRD failure")
     return output_file
 
@@ -60,8 +52,6 @@ def run_translation_X2S(input_files, output_file, **kwargs):
         signaling_input_file=output_file,
         **kwargs).split()
     return_code = subprocess.call(command_line)
-    logging.debug("command line: {}\nreturn code: {}".format(
-        ' '.join(command_line), return_code))
     return output_file
 
 def run_signaling(input_file, output_file, **kwargs):
@@ -70,8 +60,6 @@ def run_signaling(input_file, output_file, **kwargs):
         output_file=output_file,
         **kwargs).split()
     return_code = subprocess.call(command_line)
-    logging.debug("command line: {}\nreturn code: {}".format(
-        ' '.join(command_line), return_code))
     return output_file
 
 def run_translation_S2X(target_cell_output_file, signaling_files, output_file, **kwargs):
@@ -81,8 +69,6 @@ def run_translation_S2X(target_cell_output_file, signaling_files, output_file, *
         target_cell_input_file=output_file,
         **kwargs).split()
     return_code = subprocess.call(command_line)
-    logging.debug("command line: {}\nreturn code: {}".format(
-        ' '.join(command_line), return_code))
     return output_file
 
 
