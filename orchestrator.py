@@ -29,10 +29,9 @@ def run_cell(input_file, output_file, **kwargs):
             input_file=input_file,
             output_file=output_file,
             **kwargs).split()
-        proc = subprocess.Popen(command_line,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(command_line)
         try:
-            outs, errs = proc.communicate(timeout=TIMEOUT)
+            returncode = proc.wait(timeout=TIMEOUT)
         except subprocess.TimeoutExpired:
             proc.kill()
             kwargs['seed'] += 1
