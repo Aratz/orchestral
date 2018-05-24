@@ -37,9 +37,7 @@ def run_cell(input_file, output_file, **kwargs):
             break
     else:
         raise subprocess.TimeoutExpired(command_line, TIMEOUT)
-    if not returncode:
-        pass
-    else:
+    if returncode:
         raise Exception("GFRD failure")
     return output_file
 
