@@ -143,17 +143,4 @@ for step in range(1, config["n_steps"] + 1):
                 config["data_folder"] + "/cell-{}-{}.out".format(step, cell_id),
                 input_files)
 
-from dask.diagnostics import Profiler
-
-with Profiler() as prof:
-    get(dag, [config["data_folder"] + "/cell-{}-{}.out".format(config["n_steps"], cell_id) for cell_id in network], retries=3)
-
-with open(sys.argv[4], 'w') as f:
-    json.dump(
-            [{
-                key: value
-                for key, value in task._asdict().items()
-                if key in ['key', 'start_time', 'end_time']
-                }
-                for task in prof.results],
-            f)
+get(dag, [config["data_folder"] + "/cell-{}-{}.out".format(config["n_steps"], cell_id) for cell_id in network], retries=3)
