@@ -85,8 +85,10 @@ def run_translation_S2X(target_cell_output_file, signaling_files, output_file, *
 dag = {}
 for step in range(1, config["n_steps"] + 1):
     for cell_id, cell_config in network.items():
-        input_file = config["data_folder"] + "/cell-{}-{}.in".format(step, cell_id)
-        output_file = config["data_folder"] + "/cell-{}-{}.out".format(step, cell_id)
+        input_file = (config["data_folder"] + "/"
+                + config["cell_file"].format(step=step, cell_id=cell_id) + ".in")
+        output_file = (config["data_folder"] + "/"
+                + config["cell_file"].format(step=step, cell_id=cell_id) + ".out")
         dag[output_file] = (
                 functools.partial(
                     run_cell,
@@ -107,10 +109,17 @@ for step in range(1, config["n_steps"] + 1):
                 # Avoid duplicate pairs
                 continue
             input_files = [
-                config["data_folder"] + "/cell-{}-{}.out".format(step, cell_id),
-                config["data_folder"] + "/cell-{}-{}.out".format(step, neighbor_id)
+                config["data_folder"] + "/"
+                    + config["cell_file"].format(step=step, cell_id=cell_id) + ".out",
+                config["data_folder"] + "/"
+                    + config["cell_file"].format(step=step, cell_id=neighbor_id) + ".out",
                 ]
-            output_file = config["data_folder"] +  "/signaling-{}-({},{}).in".format(step, cell_id, neighbor_id)
+            output_file = (config["data_folder"] +  "/" +
+                config["signaling_file"].format(
+                    step=step,
+                    cell_id=cell_id,
+                    neighbor_id=neighbor_id
+                ) + ".in")
 
             dag[output_file] = (
                     functools.partial(
@@ -126,8 +135,18 @@ for step in range(1, config["n_steps"] + 1):
             if neighbor_id < int(cell_id):
                 # Avoid duplicate pairs
                 continue
-            input_file = config["data_folder"] +  "/signaling-{}-({},{}).in".format(step, cell_id, neighbor_id)
-            output_file = config["data_folder"] + "/signaling-{}-({},{}).out".format(step, cell_id, neighbor_id)
+            input_file = (config["data_folder"] +  "/"
+                + config["signaling_file"].format(
+                    step=step,
+                    cell_id=cell_id,
+                    neighbor_id=neighbor_id
+                ) + ".in")
+            output_file = (config["data_folder"] + "/" +
+                config["signaling_file"].format(
+                    step=step,
+                    cell_id=cell_id,
+                    neighbor_id=neighbor_id
+                ) + ".out")
             dag[output_file] = (
                     functools.partial(
                         run_signaling,
@@ -144,18 +163,29 @@ for step in range(1, config["n_steps"] + 1):
 
     for cell_id, cell_config in network.items():
         input_files = [
-            config["data_folder"] + "/signaling-{}-({},{}).out".format(
-                step, *sorted([int(cell_id), neighbor_id]))
+            config["data_folder"] + "/"
+            + config["signaling_file"].format(
+                step=step,
+                cell_id=min(int(cell_id), neighbor_id),
+                neighbor_id=max(int(cell_id), neighbor_id)
+            ) + ".out"
             for neighbor_id in cell_config["neighbors"]
             ]
-        output_file = config["data_folder"] + "/cell-{}-{}.in".format(step + 1, cell_id)
+        output_file = (config["data_folder"] + "/"
+            + config["cell_file"].format(step=step + 1, cell_id=cell_id) + ".in")
         dag[output_file] = (
                 functools.partial(
                     run_translation_S2X,
                     output_file=output_file,
                     network_file=network_file
                     ),
-                config["data_folder"] + "/cell-{}-{}.out".format(step, cell_id),
+                config["data_folder"] + "/"
+                    + config["cell_file"].format(step=step, cell_id=cell_id) + ".out",
                 input_files)
 
-get(dag, [config["data_folder"] + "/cell-{}-{}.out".format(config["n_steps"], cell_id) for cell_id in network])
+get(
+    dag,
+    [config["data_folder"] + "/" +
+        config["cell_file"].format(step=config["n_steps"], cell_id=cell_id) + ".out"
+        for cell_id in network]
+)
