@@ -1,15 +1,18 @@
 import sys
 import json
+import parse
 import numpy as np
 
 with open(sys.argv[1], 'r') as f:
+    config = json.load(f)
+with open(sys.argv[2], 'r') as f:
     network = json.load(f)
 
-cell_output_files = sys.argv[2:-1]
+cell_output_files = sys.argv[3:-1]
 
 signaling_input_file = sys.argv[-1]
 
-cell_ids = [filename.split('/')[-1][:-4].split('-')[-1]
+cell_ids = [parse.parse(config["cell_file"], filename.split('/')[-1][:-4])["cell_id"]
         for filename in cell_output_files]
 
 cell_pos = {cell_id:np.array(network[cell_id]["position"])

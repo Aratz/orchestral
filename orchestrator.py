@@ -13,7 +13,8 @@ logging.basicConfig(filename='orchestral.log',level=logging.DEBUG)
 ProgressBar().register()
 TIMEOUT = 60
 
-with open(sys.argv[1], 'r') as f:
+config_file = sys.argv[1]
+with open(config_file, 'r') as f:
     config = json.load(f)
 
 network_file = sys.argv[2]
@@ -52,6 +53,7 @@ def run_cell(input_file, output_file, **kwargs):
 
 def run_translation_X2S(input_files, output_file, **kwargs):
     command_line = config["translation_X2S"].format(
+        config_file=config_file,
         cell_output_files=" ".join(input_files),
         signaling_input_file=output_file,
         **kwargs).split()
@@ -72,6 +74,7 @@ def run_signaling(input_file, output_file, **kwargs):
 
 def run_translation_S2X(target_cell_output_file, signaling_files, output_file, **kwargs):
     command_line = config["translation_S2X"].format(
+        config_file=config_file,
         target_cell_output_file=target_cell_output_file,
         signaling_files=" ".join(signaling_files),
         target_cell_input_file=output_file,

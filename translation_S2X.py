@@ -1,16 +1,22 @@
 import sys
 import ast
 import json
+import parse
 import numpy as np
 
 with open(sys.argv[1], 'r') as f:
+    config = json.load(f)
+
+with open(sys.argv[2], 'r') as f:
     network = json.load(f)
 
-target_cell_output_file = sys.argv[2]
-target_cell_id = target_cell_output_file.split('/')[-1][:-4].split('-')[-1]
+target_cell_output_file = sys.argv[3]
+target_cell_id = parse(config["cell_file"], sys.argv[3].split('/')[-1][:-4])["cell_id"]
 
-signaling_files = sys.argv[3:-1]
+signaling_files = sys.argv[4:-1]
 neighbor_cell_tuples = [
+        (parse(config["signaling_file"], filename.split('/')[-1][:-4])["cell_id"],
+            parse(config["signaling_file"], filename.split('/')[-1][:-4])["neighbor_id"])
         ast.literal_eval(filename.split('/')[-1][:-4].split('-')[-1])
         for filename in signaling_files]
 neighbor_cell_ids = [
