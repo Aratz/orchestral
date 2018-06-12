@@ -8,8 +8,8 @@ cd $TMPDIR/template
 
 module load gsl/2.3
 source activate orchestral
-{ time python3 $BASE_DIR/orchestrator.py config.json network.json orchetral.log profiling.json 2> $BASE_DIR/results/$SLURM_JOB_ID/stderr.txt ; } 2>> $BASE_DIR/${1}_total_time.txt
-echo $SLURM_JOB_ID >> $BASE_DIR/${1}_total_time.txt
+{ time python3 $BASE_DIR/orchestrator.py config.json network.json orchetral.log profiling.json $1 2> $BASE_DIR/results/$SLURM_JOB_ID/stderr.txt ; } 2>> $BASE_DIR/${1}_total_time_0.1.txt
+echo $SLURM_JOB_ID >> $BASE_DIR/${1}_total_time_0.1.txt
 
 cp orchestral.log $BASE_DIR/results/$SLURM_JOB_ID/
 cp profiling.json $BASE_DIR/results/$SLURM_JOB_ID/

@@ -9,7 +9,6 @@ from dask.threaded import get
 from dask.diagnostics import ProgressBar
 import logging
 
-
 with open(sys.argv[1], 'r') as f:
     config = json.load(f)
 
@@ -19,6 +18,9 @@ with open(network_file, 'r') as f:
 
 logging.basicConfig(filename=sys.argv[3], level=logging.DEBUG)
 #ProgressBar().register()
+
+ncore = int(sys.argv[5])
+
 TIMEOUT = 60
 
 @retry(stop_max_attempt_number=3)
@@ -161,7 +163,7 @@ for step in range(1, config["n_steps"] + 1):
 from dask.diagnostics import Profiler
 
 with Profiler() as prof:
-    get(dag, [config["data_folder"] + "/cell-{}-{}.out".format(config["n_steps"], cell_id) for cell_id in network])
+    get(dag, [config["data_folder"] + "/cell-{}-{}.out".format(config["n_steps"], cell_id) for cell_id in network], num_workers=ncore)
 
 with open(sys.argv[4], 'w') as f:
     json.dump(
