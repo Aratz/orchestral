@@ -6,7 +6,7 @@ import numpy as np
 with open(sys.argv[1], 'r') as f:
     config = json.load(f)
 with open(sys.argv[2], 'r') as f:
-    network = json.load(f)
+    network = json.load(f)['final']
 
 cell_output_files = sys.argv[3:-1]
 
@@ -15,16 +15,26 @@ signaling_input_file = sys.argv[-1]
 cell_ids = [parse.parse(config["cell_file"], filename.split('/')[-1][:-4])["cell_id"]
         for filename in cell_output_files]
 
-cell_pos = {cell_id:np.array(network[cell_id]["position"])
+cell_pos = {cell_id:np.array(network[cell_id]["position"] + [0.0])
         for cell_id in cell_ids}
 
-cell_sizes = {cell_id:network[cell_id]["wsize"] for cell_id in cell_ids}
+cell_sizes = {cell_id:config["cell_types"][network[cell_id]["type"]]["wsize"]
+        for cell_id in cell_ids}
 
-diff_pos = cell_pos[cell_ids[1]] - cell_pos[cell_ids[0]]
-mid_pos = (cell_pos[cell_ids[1]] + cell_pos[cell_ids[0]]) / 2
+for i, cell_id1 in enumerate(network["signaling"]):
+    for cell_id2 in network["signaling"][i+1:]:
+        diff_pos = cell_pos[cell_id1] - cell_pos[cell_id2]
+        mid_pos = (cell_pos[cell_id1] + cell_pos[cell_id2]) / 2
+        if np.linalg.norm(diff_pos, ord=np.inf) > cell_sizes[cell_id]:
+            break
+
 
 input_data = {
-        "cells":{cell_id: pos.tolist() for cell_id, pos in cell_pos.items()},
+        "cells":{cell_id:
+            {
+                "position": cell_pos[cell_id],
+                "size": cell_sizes[cell_id],
+             },
         # Put particles from both cells in the same list
         "particles":sum([
             [(
@@ -46,10 +56,10 @@ input_data = {
             ]
             # Only keep particles close to the boundary between the two cells
             if (abs(np.dot(diff_pos, pos + (cell_pos[cell_id] - cell_sizes[cell_id]/2 - mid_pos)))
-                < network[cell_id]["epsilon"]*cell_sizes[cell_id]*abs(sum(diff_pos)))
+                < config["cell_types"][network[cell_id]]["epsilon"]*cell_sizes[cell_id]*abs(sum(diff_pos)))
                 # Discard particles close to edges and corners
-                and ((pos < network[cell_id]["epsilon"]*cell_sizes[cell_id]).sum()
-                    + (pos > (1-network[cell_id]["epsilon"])*cell_sizes[cell_id]).sum()) == 1
+                and ((pos < config["cell_types"][network[cell_id]]["epsilon"]*cell_sizes[cell_id]).sum()
+                    + (pos > (1-config["cell_types"][network[cell_id]]["epsilon"])*cell_sizes[cell_id]).sum()) == 1
                 and sid == 3 # Only keep delta molecules
         ]
             for cell_file, cell_id in zip(cell_output_files, cell_ids)

@@ -1,29 +1,45 @@
 import sys
 import json
 
-N = int(sys.argv[1])
-filename = sys.argv[2]
+config_file = sys.argv[1]
+N = int(sys.argv[2])
 
-size = 1e-6
-end_time = 0.1
-epsilon = 1e-1
+with open(config_file, 'r') as f:
+    config = json.load(f)
 
 def hash(x, y):
-    return (x+y)*(x+y+1)/2 + y
+    return int((x+y)*(x+y+1)/2 + y)
 
-network = { hash(n_x, n_y):{
+size = config["cell_types"]["1"]["wsize"]
+
+# Generate two layer of overlapping 2x2 cells
+final = { hash(n_x, n_y):{
     "seed":hash(n_x, n_y) + 1,
-    "end_time":end_time,
-    "wsize":size,
-    "position": [n_x*size, n_y*size, 0.0],
-    "neighbors": [hash(n_x + dx, n_y + dy)
-        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        if 0 <= n_x + dx and n_x + dx < N
-        and 0 <= n_y + dy and n_y + dy < N],
-    "epsilon":epsilon,
+    "position": [(n_x%2)*size, n_y*size, 0.0],
+    **(config["cell_types"]["1"])
     }
-    for n_x in range(N) for n_y in range(N)}
+    for n_x in range(2*N) for n_y in range(N)}
 
-with open(filename, 'w') as f:
-    json.dump(network, f)
+signaling = [
+    sorted([
+        str(hash(n_x, n_y)),
+        str(hash(n_x + dx, n_y + dy)),
+        str(hash(2 + n_x, n_y)),
+        str(hash(2 + n_x + dx, n_y + dy)),
+        ])
+        for n_x in range(N) for n_y in range(N)
+        for dx, dy in [(1, 0), (0, 1),]
+        if 0 <= n_x + dx and n_x + dx < N
+        and 0 <= n_y + dy and n_y + dy < N
+        ]
 
+with open(config["network_file"].format(step=0) + '.out', 'w') as f:
+    json.dump({"final":final, "signaling":signaling}, f, indent=4)
+
+for cell_id in final:
+    with open("{}/{}".format(config["data_folder"], config["cell_file"].format(
+        step=0,
+        substep=0,
+        cell_id=cell_id,
+        )) + '.in', 'w') as f:
+        f.write("1 1 {0} {0} {0}\n".format(final[cell_id]["wsize"]/2))

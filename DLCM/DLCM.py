@@ -6,7 +6,7 @@ import numpy.random as npr
 
 D0 = 10.
 D1 = 1.
-BIRTH_RATE = 2.
+BIRTH_RATE = 20.
 DEATH_RATE = 1.
 
 
@@ -146,9 +146,10 @@ while t < end_time:
 
     t += tau
     if t > end_time:
+        for cell_id in data:
+            data[cell_id]["neighbors"] = [pos2cells[neighbor_id] for neighbor_id in neighbors[cell_id] if neighbor_id in pos2cells]
         break
 
-    print(t, r)
     event_list.append((t, r))
     if r[0] == 'birth':
         new_id = hash(tstep, next_cell_id)
@@ -167,6 +168,11 @@ with open(output_file, 'w') as f:
             {
                 "init":init_data,
                 "final":data,
+                "signaling":[sorted(list(pos2cells[pos])
+                        + list(pos2cells[pos[0] + dx, pos[1] + dy]))
+                    for pos in pos2cells for dx, dy in [(1, 0), (0, 1)]
+                    if (pos[0] + dx, pos[1] + dy) in pos2cells],
                 "events":event_list,
                 },
-            f)
+            f,
+            indent=4)

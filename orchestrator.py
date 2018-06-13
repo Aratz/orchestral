@@ -1,6 +1,7 @@
 import sys
 import json
 import dask
+import parse
 import string
 import functools
 import subprocess
@@ -16,11 +17,6 @@ TIMEOUT = 60
 config_file = sys.argv[1]
 with open(config_file, 'r') as f:
     config = json.load(f)
-
-network_file = sys.argv[2]
-with open(network_file, 'r') as f:
-    network = json.load(f)
-
 
 @retry(stop_max_attempt_number=3)
 def run_cell(input_file, output_file, **kwargs):
@@ -85,45 +81,47 @@ def run_translation_S2X(target_cell_output_file, signaling_files, output_file, *
     return output_file
 
 
-dag = {}
-for step in range(1, config["n_steps"] + 1):
-    for cell_id, cell_config in network.items():
-        input_file = (config["data_folder"] + "/"
-                + config["cell_file"].format(step=step, cell_id=cell_id) + ".in")
-        output_file = (config["data_folder"] + "/"
-                + config["cell_file"].format(step=step, cell_id=cell_id) + ".out")
-        dag[output_file] = (
-                functools.partial(
-                    run_cell,
-                    output_file=output_file,
-                    **{
-                        keyword:network[cell_id][keyword]
-                        for keyword in 
-                        [keyword for _, keyword, _, _
-                            in string.Formatter().parse(config["cell_executable"])
-                            if keyword not in ["input_file", "output_file"]]
-                        }
-                ),
-                input_file)
+for step in config["n_mech_steps"]:
+    dag = {}
 
-    for cell_id, cell_config in network.items():
-        for neighbor_id in cell_config["neighbors"]:
-            if neighbor_id < int(cell_id):
-                # Avoid duplicate pairs
-                continue
+    with open(config["network_file"].format(step), 'r') as f:
+        network = json.load(f)
+
+    for substep in range(1, config["n_kin_substeps"] + 1):
+        for cell_id, cell_config in network["final"].items():
+            input_file = (config["data_folder"] + "/"
+                    + config["cell_file"].format(step=step, substep=substep, cell_id=cell_id) + ".in")
+            output_file = (config["data_folder"] + "/"
+                    + config["cell_file"].format(step=step, substep=substep, cell_id=cell_id) + ".out")
+            dag[output_file] = (
+                    functools.partial(
+                        run_cell,
+                        output_file=output_file,
+                        **{
+                            keyword:network["final"][cell_id][keyword]
+                            for keyword in 
+                            [keyword for _, keyword, _, _
+                                in string.Formatter().parse(config["cell_executable"])
+                                if keyword not in ["input_file", "output_file"]]
+                            }
+                    ),
+                    input_file)
+
+        for signal in network["signaling"]:
             input_files = [
-                config["data_folder"] + "/"
-                    + config["cell_file"].format(step=step, cell_id=cell_id) + ".out",
-                config["data_folder"] + "/"
-                    + config["cell_file"].format(step=step, cell_id=neighbor_id) + ".out",
-                ]
+                    config["data_folder"] + "/"
+                        + config["cell_file"].format(
+                            step=step,
+                            substep=substep,
+                            cell_id=cell_i
+                            ) + ".out"
+                        for cell_id in signal]
             output_file = (config["data_folder"] +  "/" +
                 config["signaling_file"].format(
                     step=step,
-                    cell_id=cell_id,
-                    neighbor_id=neighbor_id
+                    substep=substep,
+                    signaling_id=string(signal),
                 ) + ".in")
-
             dag[output_file] = (
                     functools.partial(
                         run_translation_X2S,
@@ -132,23 +130,18 @@ for step in range(1, config["n_steps"] + 1):
                     ),
                     input_files)
 
-
-    for cell_id, cell_config in network.items():
-        for neighbor_id in cell_config["neighbors"]:
-            if neighbor_id < int(cell_id):
-                # Avoid duplicate pairs
-                continue
-            input_file = (config["data_folder"] +  "/"
-                + config["signaling_file"].format(
-                    step=step,
-                    cell_id=cell_id,
-                    neighbor_id=neighbor_id
-                ) + ".in")
-            output_file = (config["data_folder"] + "/" +
+        for signal in network["signaling"]:
+            input_file = (config["data_folder"] +  "/" +
                 config["signaling_file"].format(
                     step=step,
-                    cell_id=cell_id,
-                    neighbor_id=neighbor_id
+                    substep=substep,
+                    signaling_id=string(signal),
+                ) + ".in")
+            output_file = (config["data_folder"] +  "/" +
+                config["signaling_file"].format(
+                    step=step,
+                    substep=substep,
+                    signaling_id=string(signal),
                 ) + ".out")
             dag[output_file] = (
                     functools.partial(
@@ -164,31 +157,46 @@ for step in range(1, config["n_steps"] + 1):
                     ),
                     input_file)
 
-    for cell_id, cell_config in network.items():
-        input_files = [
-            config["data_folder"] + "/"
-            + config["signaling_file"].format(
-                step=step,
-                cell_id=min(int(cell_id), neighbor_id),
-                neighbor_id=max(int(cell_id), neighbor_id)
-            ) + ".out"
-            for neighbor_id in cell_config["neighbors"]
-            ]
-        output_file = (config["data_folder"] + "/"
-            + config["cell_file"].format(step=step + 1, cell_id=cell_id) + ".in")
-        dag[output_file] = (
-                functools.partial(
-                    run_translation_S2X,
-                    output_file=output_file,
-                    network_file=network_file
-                    ),
-                config["data_folder"] + "/"
-                    + config["cell_file"].format(step=step, cell_id=cell_id) + ".out",
-                input_files)
+        cell2signal = {}
+        for signal in network["signal"]:
+            for cell_id in signal:
+                if cell_id in cell2signal:
+                    cell2signal[cell_id].append(signal)
+                else:
+                    cell2signal[cell_id] = [signal]
 
-get(
-    dag,
-    [config["data_folder"] + "/" +
-        config["cell_file"].format(step=config["n_steps"], cell_id=cell_id) + ".out"
-        for cell_id in network]
-)
+        for cell_id, cell_config in network["final"].items():
+            input_files = [
+                config["data_folder"] + "/"
+                + config["signaling_file"].format(
+                    step=step,
+                    substep=substep,
+                    signaling_id=signal,
+                ) + ".out"
+                for signal in cell2signal[cell_id]
+                ]
+            output_file = (config["data_folder"] + "/"
+                + config["cell_file"].format(
+                    step=step + (substep+1)//config["n_kin_substeps"],
+                    substep=(substep + 1)%config["n_kin_substeps"]
+                    cell_id=cell_id
+                    ) + ".in")
+            dag[output_file] = (
+                    functools.partial(
+                        run_translation_S2X,
+                        output_file=output_file,
+                        network_file=network_file
+                        ),
+                    config["data_folder"] + "/"
+                        + config["cell_file"].format(
+                            step=step,
+                            substep=substep,
+                            cell_id=cell_id) + ".out",
+                    input_files)
+
+    get(
+        dag,
+        [config["data_folder"] + "/" +
+            config["cell_file"].format(step=config["n_steps"], cell_id=cell_id) + ".out"
+            for cell_id in network]
+    )

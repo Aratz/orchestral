@@ -25,16 +25,35 @@ with open(input_file, 'r') as f:
 
 cids = list(data["cells"].keys())
 inverted_cid = dict(zip(cids, reversed(cids)))
+inverted_cid = {}
+for cell_id1 in cids:
+    for cell_id2 in cids:
+        if np.linalg.norm(
+                np.array(data["cells"][cell_id1]["position"])
+                - np.array(data["cells"][cell_id2]["position"]),
+                ord=np.inf) > data["cells"][cell_id1]["size"]:
+            if cell_id1 not in inverted_cid:
+                inverted_cid[cell_id1] = []
+            inverted_cid[cell_id1].append(cell_id2)
 
-diff_pos = np.array(data["cells"][cids[1]]) - np.array(data["cells"][cids[0]])
-mid_pos = diff_pos / 2
+def pick_neighbor(cell_id):
+    return npr.choice(inverted_cid[cell_id])
+
+for i, cell_id1 in enumerate(cids):
+    for cell_id2 in cids[i+1:]:
+        diff_pos = (np.array(data["cells"][cids[1]]["position"])
+            - np.array(data["cells"][cids[0]]["position"]))
+        mid_pos = diff_pos / 2
+        if np.linalg.norm(diff_pos, ord=np.inf) > data["cells"][cell_id1]["size"]:
+            break
+
 
 
 new_positions = {
-        "cells":{cid: pos for cid, pos in data["cells"].items()},
+        "cells":{cid: cell for cid, cell in data["cells"].items()},
         "particles": [
             (
-                inverted_cid[cid],
+                pick_neighbor(cell_id),
                 "Notch",
                 (   np.array(pos) - 2*(np.dot(np.array(pos) - mid_pos, diff_pos/np.linalg.norm(diff_pos)**2)*diff_pos) - diff_pos
                     if cid == cids[0] else
