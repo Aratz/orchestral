@@ -3,6 +3,7 @@ import json
 import dask
 import parse
 import string
+import argparse
 import functools
 import subprocess
 from retrying import retry
@@ -10,11 +11,19 @@ from dask.threaded import get
 from dask.diagnostics import ProgressBar
 import logging
 
-logging.basicConfig(filename='orchestral.log',level=logging.DEBUG)
-ProgressBar().register()
+parser = argparse.ArgumentParser(description="Orchestral")
+parser.add_argument('-config', help="Config file")
+parser.add_argument('-log', help="Log file")
+parser.add_argument('-dry-run', help="print commands without executing them",
+        action='store_true')
+
+args = vars(parser.parse_args())
+
+logging.basicConfig(filename=args['log'],level=logging.DEBUG)
+#ProgressBar().register()
 TIMEOUT = 60
 
-config_file = sys.argv[1]
+config_file = args['config']
 with open(config_file, 'r') as f:
     config = json.load(f)
 
@@ -25,6 +34,11 @@ def run_cell(input_file, output_file, **kwargs):
             input_file=input_file,
             output_file=output_file,
             **kwargs).split()
+
+        if args['dry_run']:
+            print(" ".join(command_line))
+            return output_file
+
         proc = subprocess.Popen(command_line,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
@@ -53,6 +67,11 @@ def run_translation_X2S(input_files, output_file, **kwargs):
         cell_output_files=" ".join(input_files),
         signaling_input_file=output_file,
         **kwargs).split()
+
+    if args['dry_run']:
+        print(" ".join(command_line))
+        return output_file
+
     return_code = subprocess.call(command_line)
     logging.debug("command line: {}\nreturn code: {}".format(
         ' '.join(command_line), return_code))
@@ -63,6 +82,11 @@ def run_signaling(input_file, output_file, **kwargs):
         input_file=input_file,
         output_file=output_file,
         **kwargs).split()
+
+    if args['dry_run']:
+        print(" ".join(command_line))
+        return output_file
+
     return_code = subprocess.call(command_line)
     logging.debug("command line: {}\nreturn code: {}".format(
         ' '.join(command_line), return_code))
@@ -75,19 +99,28 @@ def run_translation_S2X(target_cell_output_file, signaling_files, output_file, *
         signaling_files=" ".join(signaling_files),
         target_cell_input_file=output_file,
         **kwargs).split()
+
+    if args['dry_run']:
+        print(" ".join(command_line))
+        return output_file
+
     return_code = subprocess.call(command_line)
     logging.debug("command line: {}\nreturn code: {}".format(
         ' '.join(command_line), return_code))
     return output_file
 
 
-for step in config["n_mech_steps"]:
+end_time = config["simulation_time"] / config["n_mech_steps"]
+for step in range(config["n_mech_steps"]):
     dag = {}
+    sub_end_time = end_time / config["n_kin_substeps"]
 
-    with open(config["network_file"].format(step), 'r') as f:
+    network_file = "{}/{}".format(config["data_folder"],
+            config["network_file"].format(step=step) + '.out')
+    with open(network_file, 'r') as f:
         network = json.load(f)
 
-    for substep in range(1, config["n_kin_substeps"] + 1):
+    for substep in range(config["n_kin_substeps"]):
         for cell_id, cell_config in network["final"].items():
             input_file = (config["data_folder"] + "/"
                     + config["cell_file"].format(step=step, substep=substep, cell_id=cell_id) + ".in")
@@ -97,12 +130,13 @@ for step in config["n_mech_steps"]:
                     functools.partial(
                         run_cell,
                         output_file=output_file,
+                        end_time=sub_end_time,
                         **{
                             keyword:network["final"][cell_id][keyword]
                             for keyword in 
                             [keyword for _, keyword, _, _
                                 in string.Formatter().parse(config["cell_executable"])
-                                if keyword not in ["input_file", "output_file"]]
+                                if keyword not in ["input_file", "output_file", "end_time"]]
                             }
                     ),
                     input_file)
@@ -113,14 +147,14 @@ for step in config["n_mech_steps"]:
                         + config["cell_file"].format(
                             step=step,
                             substep=substep,
-                            cell_id=cell_i
+                            cell_id=cell_id,
                             ) + ".out"
                         for cell_id in signal]
             output_file = (config["data_folder"] +  "/" +
                 config["signaling_file"].format(
                     step=step,
                     substep=substep,
-                    signaling_id=string(signal),
+                    signaling_id="{}".format(",".join([signal_id for signal_id in signal])),
                 ) + ".in")
             dag[output_file] = (
                     functools.partial(
@@ -135,30 +169,31 @@ for step in config["n_mech_steps"]:
                 config["signaling_file"].format(
                     step=step,
                     substep=substep,
-                    signaling_id=string(signal),
+                    signaling_id="{}".format(",".join([signal_id for signal_id in signal])),
                 ) + ".in")
             output_file = (config["data_folder"] +  "/" +
                 config["signaling_file"].format(
                     step=step,
                     substep=substep,
-                    signaling_id=string(signal),
+                    signaling_id="{}".format(",".join([signal_id for signal_id in signal])),
                 ) + ".out")
             dag[output_file] = (
                     functools.partial(
                         run_signaling,
                         output_file=output_file,
+                        end_time=sub_end_time,
                         **{
-                            keyword:network[cell_id][keyword]
-                            for keyword in 
+                            keyword:network["final"][cell_id][keyword]
+                            for keyword in
                             [keyword for _, keyword, _, _
                                 in string.Formatter().parse(config["signaling_executable"])
-                                if keyword not in ["input_file", "output_file"]]
+                                if keyword not in ["input_file", "output_file", "end_time"]]
                             }
                     ),
                     input_file)
 
         cell2signal = {}
-        for signal in network["signal"]:
+        for signal in network["signaling"]:
             for cell_id in signal:
                 if cell_id in cell2signal:
                     cell2signal[cell_id].append(signal)
@@ -171,14 +206,14 @@ for step in config["n_mech_steps"]:
                 + config["signaling_file"].format(
                     step=step,
                     substep=substep,
-                    signaling_id=signal,
+                    signaling_id="{}".format(",".join([signal_id for signal_id in signal])),
                 ) + ".out"
                 for signal in cell2signal[cell_id]
                 ]
             output_file = (config["data_folder"] + "/"
                 + config["cell_file"].format(
                     step=step + (substep+1)//config["n_kin_substeps"],
-                    substep=(substep + 1)%config["n_kin_substeps"]
+                    substep=(substep + 1) % config["n_kin_substeps"],
                     cell_id=cell_id
                     ) + ".in")
             dag[output_file] = (
@@ -197,6 +232,10 @@ for step in config["n_mech_steps"]:
     get(
         dag,
         [config["data_folder"] + "/" +
-            config["cell_file"].format(step=config["n_steps"], cell_id=cell_id) + ".out"
-            for cell_id in network]
+            config["cell_file"].format(
+                step=step+1,
+                substep=0,
+                cell_id=cell_id,
+                ) + ".in"
+            for cell_id in network["final"]]
     )

@@ -8,8 +8,8 @@
     "cell_file":"cell-{step}.{substep}-{cell_id}",
     "signaling_file":"signaling-{step}.{substep}-{signaling_id}",
     "network_file":"network-{step}",
-    "n_mech_steps":3,
-    "n_kin_substeps":3,
-    "simulation_time":9,
+    "n_mech_steps":1,
+    "n_kin_substeps":1,
+    "simulation_time":1,
     "cell_types":{"1":{"epsilon": 0.1, "wsize": 1e-06}}
 }

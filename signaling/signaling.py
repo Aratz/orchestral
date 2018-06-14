@@ -31,7 +31,7 @@ for cell_id1 in cids:
         if np.linalg.norm(
                 np.array(data["cells"][cell_id1]["position"])
                 - np.array(data["cells"][cell_id2]["position"]),
-                ord=np.inf) > data["cells"][cell_id1]["size"]:
+                ord=np.inf) > data["cells"][cell_id1]["size"] / 2:
             if cell_id1 not in inverted_cid:
                 inverted_cid[cell_id1] = []
             inverted_cid[cell_id1].append(cell_id2)
@@ -44,7 +44,7 @@ for i, cell_id1 in enumerate(cids):
         diff_pos = (np.array(data["cells"][cids[1]]["position"])
             - np.array(data["cells"][cids[0]]["position"]))
         mid_pos = diff_pos / 2
-        if np.linalg.norm(diff_pos, ord=np.inf) > data["cells"][cell_id1]["size"]:
+        if np.linalg.norm(diff_pos, ord=np.inf) > data["cells"][cell_id1]["size"] / 2:
             break
 
 
@@ -53,7 +53,7 @@ new_positions = {
         "cells":{cid: cell for cid, cell in data["cells"].items()},
         "particles": [
             (
-                pick_neighbor(cell_id),
+                pick_neighbor(cid),
                 "Notch",
                 (   np.array(pos) - 2*(np.dot(np.array(pos) - mid_pos, diff_pos/np.linalg.norm(diff_pos)**2)*diff_pos) - diff_pos
                     if cid == cids[0] else

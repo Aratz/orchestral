@@ -15,6 +15,7 @@ size = config["cell_types"]["1"]["wsize"]
 # Generate two layer of overlapping 2x2 cells
 final = { hash(n_x, n_y):{
     "seed":hash(n_x, n_y) + 1,
+    "type":"1",
     "position": [(n_x%2)*size, n_y*size, 0.0],
     **(config["cell_types"]["1"])
     }
@@ -33,7 +34,7 @@ signaling = [
         and 0 <= n_y + dy and n_y + dy < N
         ]
 
-with open(config["network_file"].format(step=0) + '.out', 'w') as f:
+with open("{}/{}".format(config["data_folder"], config["network_file"].format(step=0) + '.out'), 'w') as f:
     json.dump({"final":final, "signaling":signaling}, f, indent=4)
 
 for cell_id in final:
