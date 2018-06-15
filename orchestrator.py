@@ -244,7 +244,7 @@ for step in range(config["n_mech_steps"]):
                     substep=substep,
                     signaling_id="{}".format(",".join([signal_id for signal_id in signal])),
                 ) + ".out"
-                for signal in cell2signal[cell_id]
+                for signal in cell2signal.get(cell_id, [])
                 ]
             output_file = (config["data_folder"] + "/"
                 + config["cell_file"].format(
