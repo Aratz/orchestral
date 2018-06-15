@@ -27,6 +27,26 @@ config_file = args['config']
 with open(config_file, 'r') as f:
     config = json.load(f)
 
+def run_mechanics(input_file, output_file, **kwargs):
+    command_line = config["mechanics_executable"].format(
+            input_file=input_file,
+            output_file=output_file,
+            **kwargs).split()
+
+    if args['dry_run']:
+        print(" ".join(command_line))
+        return output_file
+
+    return_code = subprocess.call(command_line)
+    if return_code:
+        logging.error("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), return_code))
+        raise Exception("DLCM failure")
+    else:
+        logging.debug("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), return_code))
+    return output_file
+
 @retry(stop_max_attempt_number=3)
 def run_cell(input_file, output_file, **kwargs):
     for _ in range(3):
@@ -109,14 +129,30 @@ def run_translation_S2X(target_cell_output_file, signaling_files, output_file, *
         ' '.join(command_line), return_code))
     return output_file
 
+def run_translation_F(network_output, network_input, **kwargs):
+    command_line = config["translation_F"].format(
+        config_file=config_file,
+        network_output=network_output,
+        network_input=network_input,
+        **kwargs).split()
+
+    if args['dry_run']:
+        print(" ".join(command_line))
+        return output_file
+
+    return_code = subprocess.call(command_line)
+    logging.debug("command line: {}\nreturn code: {}".format(
+        ' '.join(command_line), return_code))
+    return network_input
+
 
 end_time = config["simulation_time"] / config["n_mech_steps"]
+network_file = "{}/{}".format(config["data_folder"],
+        config["network_file"].format(step=0) + '.out')
 for step in range(config["n_mech_steps"]):
     dag = {}
     sub_end_time = end_time / config["n_kin_substeps"]
 
-    network_file = "{}/{}".format(config["data_folder"],
-            config["network_file"].format(step=step) + '.out')
     with open(network_file, 'r') as f:
         network = json.load(f)
 
@@ -239,3 +275,16 @@ for step in range(config["n_mech_steps"]):
                 ) + ".in"
             for cell_id in network["final"]]
     )
+
+    network_file = run_mechanics(
+            run_translation_F(
+                network_file,
+                "{}/{}".format(config["data_folder"],
+                    config["network_file"].format(step=step + 1) + ".in")
+                ),
+            "{}/{}".format(config["data_folder"],
+                config["network_file"].format(step=step + 1) + ".out"),
+            tstep=step,
+            seed=config["seed"],
+            end_time=end_time,
+            )
