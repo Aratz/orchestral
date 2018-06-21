@@ -149,7 +149,8 @@ while t < end_time and data:
     def index2coordinates(c):
         return [
                 c[0]*cell_size + min_x,
-                c[1]*cell_size + min_y
+                c[1]*cell_size + min_y,
+                0,
                 ]
 
     t += tau
@@ -174,7 +175,7 @@ with open(output_file, 'w') as f:
                 "init":init_data,
                 "final":data,
                 "signaling":[sorted(list(pos2cells[pos])
-                        + list(pos2cells[pos[0] + dx, pos[1] + dy]))
+                        + list(pos2cells[(pos[0] + dx, pos[1] + dy)]))
                     for pos in pos2cells for dx, dy in [(1, 0), (0, 1)]
                     if (pos[0] + dx, pos[1] + dy) in pos2cells],
                 "events":event_list,
