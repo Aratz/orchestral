@@ -8,25 +8,25 @@ with open(config_file, 'r') as f:
     config = json.load(f)
 
 def hash(x, y):
-    return int((x+y)*(x+y+1)/2 + y)
+    return int(round((x+y)*(x+y+1)/2 + y))
 
 size = config["cell_types"]["1"]["wsize"]
 
 # Generate two layer of overlapping 2x2 cells
-final = { hash(n_x, n_y):{
-    "seed":hash(n_x, n_y) + 1,
+final = { hash(0, hash(n_x, n_y)):{
+    "seed":hash(0, hash(n_x, n_y)),
     "type":"1",
-    "position": [(n_x%2)*size, n_y*size, 0.0],
+    "position": [(n_x//2)*size, n_y*size, 0.0],
     **(config["cell_types"]["1"])
     }
     for n_x in range(2*N) for n_y in range(N)}
 
 signaling = [
     sorted([
-        str(hash(n_x, n_y)),
-        str(hash(n_x + dx, n_y + dy)),
-        str(hash(2 + n_x, n_y)),
-        str(hash(2 + n_x + dx, n_y + dy)),
+        str(hash(0, hash(2*n_x, n_y))),
+        str(hash(0, hash(2*(n_x + dx), n_y + dy))),
+        str(hash(0, hash(2*n_x + 1, n_y))),
+        str(hash(0, hash(2*(n_x + dx) + 1, n_y + dy))),
         ])
         for n_x in range(N) for n_y in range(N)
         for dx, dy in [(1, 0), (0, 1),]
