@@ -6,8 +6,8 @@ import numpy.random as npr
 
 D0 = 10.
 D1 = 1.
-BIRTH_RATE = 20.
-DEATH_RATE = 1.
+BIRTH_RATE = 1.
+DEATH_RATE = 0.
 
 
 parser = argparse.ArgumentParser(description="Simulate cell mechanics and division")
