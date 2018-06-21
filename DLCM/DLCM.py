@@ -33,27 +33,30 @@ event_list = []
 
 npr.seed(seed)
 
-cell_size = list(data.values())[0]['size']
 
 next_cell_id = 0
 def hash(t, i):
-    return str(int((t+i)*(t+i+1)/2) + i)
-t = 0
+    return str(int(round((t+i)*(t+i+1)/2)) + i)
 
-while t < end_time:
-    margin = 3
+t = 0
+pos2cells = {}
+
+while t < end_time and data:
+    cell_size = list(data.values())[0]['wsize']
+
+    margin = 1
 
     min_x = min([cell['position'][0] for cell in data.values()]) - margin*cell_size
     max_x = max([cell['position'][0] for cell in data.values()]) + margin*cell_size
     min_y = min([cell['position'][1] for cell in data.values()]) - margin*cell_size
     max_y = max([cell['position'][1] for cell in data.values()]) + margin*cell_size
 
-    n_x = int((max_x - min_x)/cell_size)
-    n_y = int((max_y - min_y)/cell_size)
+    n_x = int(round((max_x - min_x)/cell_size)) + 1
+    n_y = int(round((max_y - min_y)/cell_size)) + 1
 
     cell_n_index = {cell_id: (
-        int((cell['position'][0]-min_x)/cell_size),
-        int((cell['position'][1]-min_y)/cell_size)
+        int(round((cell['position'][0]-min_x)/cell_size)),
+        int(round((cell['position'][1]-min_y)/cell_size))
         )
         for cell_id, cell in data.items()}
 
@@ -102,7 +105,8 @@ while t < end_time:
 
 
     index_coordinates = {
-            (int((c[0]-min_x)/cell_size), int((c[1]-min_y)/cell_size)): p
+            (int(round((c[0]-min_x)/cell_size)),
+                int(round((c[1]-min_y)/cell_size))): p
             for p, c in zip(p.vector(), V.tabulate_dof_coordinates().reshape(-1, 2))}
 
     #Get transition rates
@@ -116,7 +120,7 @@ while t < end_time:
     }
 
     transition_rates = {
-            ('move', cell_id, origin, destination):
+            ('move', (cell_id, origin, destination)):
             max(
                 (index_coordinates[origin] - index_coordinates[destination])*
                     (D1 if destination in pos2cells else D0),
@@ -126,10 +130,12 @@ while t < end_time:
             for destination in neighbors[cell_id]
             }
 
-    # TODO add birth and death rates
-    transition_rates[('birth', cell_id)] = BIRTH_RATE
     for cell_id in cell_n_index:
-        transition_rates[('death', cell_id)] = DEATH_RATE
+        transition_rates[('death', (cell_id,))] = DEATH_RATE
+
+    for cells in pos2cells.values():
+        if len(cells) == 1:
+            transition_rates[('birth', (cells[0], hash(tstep, next_cell_id)))] = BIRTH_RATE
 
     p_sum = sum(transition_rates.values())
     for key in transition_rates:
@@ -152,16 +158,13 @@ while t < end_time:
 
     event_list.append((t, r))
     if r[0] == 'birth':
-        new_id = hash(tstep, next_cell_id)
-        data[new_id] = {
-            "position":index2coordinates(cell_n_index[r[1]]),
-            "size":data[r[1]]["size"],
-            }
+        new_id = r[1][1]
+        data[new_id] = data[r[1][0]].copy()
         next_cell_id += 1
     elif r[0] == 'death':
-        data.pop(r[1])
+        data.pop(r[1][0])
     elif r[0] == 'move':
-        data[r[1]]["position"] = index2coordinates(r[3])
+        data[r[1][0]]["position"] = index2coordinates(r[1][2])
 
 with open(output_file, 'w') as f:
     json.dump(
