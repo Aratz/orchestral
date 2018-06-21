@@ -46,6 +46,8 @@ for i, cell_id1 in enumerate(cids):
         mid_pos = diff_pos / 2
         if np.linalg.norm(diff_pos, ord=np.inf) > data["cells"][cell_id1]["size"] / 2:
             break
+    if np.linalg.norm(diff_pos, ord=np.inf) > data["cells"][cell_id1]["size"] / 2:
+        break
 
 
 

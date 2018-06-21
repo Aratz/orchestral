@@ -31,6 +31,8 @@ for i, cell_id1 in enumerate(signal):
         mid_pos = (cell_pos[cell_id1] + cell_pos[cell_id2]) / 2
         if np.linalg.norm(diff_pos, ord=np.inf) > cell_sizes[cell_id1] / 2:
             break
+    if np.linalg.norm(diff_pos, ord=np.inf) > cell_sizes[cell_id1] / 2:
+        break
 
 input_data = {
         "cells":{cell_id:
