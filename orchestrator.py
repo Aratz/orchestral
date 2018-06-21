@@ -93,8 +93,13 @@ def run_translation_X2S(input_files, output_file, **kwargs):
         return output_file
 
     return_code = subprocess.call(command_line)
-    logging.debug("command line: {}\nreturn code: {}".format(
-        ' '.join(command_line), return_code))
+    if return_code:
+        logging.error("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), return_code))
+        raise Exception("X2S failure")
+    else:
+        logging.debug("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), return_code))
     return output_file
 
 def run_signaling(input_file, output_file, **kwargs):
@@ -108,8 +113,13 @@ def run_signaling(input_file, output_file, **kwargs):
         return output_file
 
     return_code = subprocess.call(command_line)
-    logging.debug("command line: {}\nreturn code: {}".format(
-        ' '.join(command_line), return_code))
+    if return_code:
+        logging.error("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), return_code))
+        raise Exception("Signaling failure")
+    else:
+        logging.debug("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), return_code))
     return output_file
 
 def run_translation_S2X(target_cell_output_file, signaling_files, output_file, **kwargs):
@@ -125,8 +135,13 @@ def run_translation_S2X(target_cell_output_file, signaling_files, output_file, *
         return output_file
 
     return_code = subprocess.call(command_line)
-    logging.debug("command line: {}\nreturn code: {}".format(
-        ' '.join(command_line), return_code))
+    if return_code:
+        logging.error("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), return_code))
+        raise Exception("S2X failure")
+    else:
+        logging.debug("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), return_code))
     return output_file
 
 def generate_network_input(network_output, network_input, **kwargs):
