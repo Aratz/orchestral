@@ -41,8 +41,8 @@ def pick_neighbor(cell_id):
 
 for i, cell_id1 in enumerate(cids):
     for cell_id2 in cids[i+1:]:
-        diff_pos = (np.array(data["cells"][cids[1]]["position"])
-            - np.array(data["cells"][cids[0]]["position"]))
+        diff_pos = (np.array(data["cells"][cell_id1]["position"])
+            - np.array(data["cells"][cell_id2]["position"]))
         mid_pos = diff_pos / 2
         if np.linalg.norm(diff_pos, ord=np.inf) > data["cells"][cell_id1]["size"] / 2:
             break
