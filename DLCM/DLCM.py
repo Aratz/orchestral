@@ -12,7 +12,7 @@ DEATH_RATE = 0.
 
 parser = argparse.ArgumentParser(description="Simulate cell mechanics and division")
 parser.add_argument('-seed', type=int)
-parser.add_argument('-tstep', type=int)
+parser.add_argument('-tstep', type=int) # Useful to generate unique hashes for newborn cells
 parser.add_argument('-e', help="End time", type=float)
 parser.add_argument('-in', help="Input file")
 parser.add_argument('-out', help="Output file")
