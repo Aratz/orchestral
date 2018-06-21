@@ -143,6 +143,7 @@ while t < end_time and data:
     for key in transition_rates:
         transition_rates[key] /= p_sum
 
+    transition_rates[0] = 0.0 # Bypass numpy issue #11399
     r = npr.choice(list(transition_rates.keys()), size=1, p=list(transition_rates.values()))[0]
 
     def index2coordinates(c):
