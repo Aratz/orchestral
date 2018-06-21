@@ -129,8 +129,8 @@ def run_translation_S2X(target_cell_output_file, signaling_files, output_file, *
         ' '.join(command_line), return_code))
     return output_file
 
-def run_translation_F(network_output, network_input, **kwargs):
-    command_line = config["translation_F"].format(
+def generate_network_input(network_output, network_input, **kwargs):
+    command_line = config["generate_network_input"].format(
         config_file=config_file,
         network_output=network_output,
         network_input=network_input,
@@ -141,9 +141,32 @@ def run_translation_F(network_output, network_input, **kwargs):
         return output_file
 
     return_code = subprocess.call(command_line)
+    if return_code:
+        logging.error("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), return_code))
+        raise Exception("network_input failure")
     logging.debug("command line: {}\nreturn code: {}".format(
         ' '.join(command_line), return_code))
     return network_input
+
+def update_network(network_output):
+    command_line = config["update_network"].format(
+        config_file=config_file,
+        network_output=network_output
+        ).split()
+
+    if args['dry_run']:
+        print(" ".join(command_line))
+        return
+
+    return_code = subprocess.call(command_line)
+    if return_code:
+        logging.error("command line: {}\nreturn code: {}".format(
+            ' '.join(command_line), return_code))
+        raise Exception("update_network failure")
+    logging.debug("command line: {}\nreturn code: {}".format(
+        ' '.join(command_line), return_code))
+    return
 
 
 end_time = config["simulation_time"] / config["n_mech_steps"]
@@ -277,14 +300,18 @@ for step in range(config["n_mech_steps"]):
     )
 
     network_file = run_mechanics(
-            run_translation_F(
+            generate_network_input(
                 network_file,
                 "{}/{}".format(config["data_folder"],
                     config["network_file"].format(step=step + 1) + ".in")
                 ),
             "{}/{}".format(config["data_folder"],
                 config["network_file"].format(step=step + 1) + ".out"),
-            tstep=step,
+            tstep=step + 1,
             seed=config["seed"],
             end_time=end_time,
             )
+
+    update_network(
+            "{}/{}".format(config["data_folder"],
+                config["network_file"].format(step=step + 1) + ".out"))
