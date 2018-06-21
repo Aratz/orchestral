@@ -138,10 +138,11 @@ while t < end_time and data:
             transition_rates[('birth', (cells[0], hash(tstep, next_cell_id)))] = BIRTH_RATE
 
     p_sum = sum(transition_rates.values())
+    tau = -np.log(npr.uniform())/p_sum
+
     for key in transition_rates:
         transition_rates[key] /= p_sum
 
-    tau = -np.log(npr.uniform())/p_sum
     r = npr.choice(list(transition_rates.keys()), size=1, p=list(transition_rates.values()))[0]
 
     def index2coordinates(c):
