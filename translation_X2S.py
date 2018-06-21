@@ -34,6 +34,10 @@ for i, cell_id1 in enumerate(signal):
     if np.linalg.norm(diff_pos, ord=np.inf) > cell_sizes[cell_id1] / 2:
         break
 
+
+if np.linalg.norm(diff_pos, ord=np.inf) == 0.:
+    raise Exception("Null diff pos vector")
+
 input_data = {
         "cells":{cell_id:
             {
