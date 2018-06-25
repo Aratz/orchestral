@@ -256,12 +256,13 @@ for step in range(config["n_mech_steps"]):
                         run_signaling,
                         output_file=output_file,
                         end_time=sub_end_time,
+                        seed=network["final"][cell_id]["seed"]+step+substep,
                         **{
                             keyword:network["final"][cell_id][keyword]
                             for keyword in
                             [keyword for _, keyword, _, _
                                 in string.Formatter().parse(config["signaling_executable"])
-                                if keyword not in ["input_file", "output_file", "end_time"]]
+                                if keyword not in ["input_file", "output_file", "end_time", "seed"]]
                             }
                     ),
                     input_file)
@@ -323,7 +324,7 @@ for step in range(config["n_mech_steps"]):
             "{}/{}".format(config["data_folder"],
                 config["network_file"].format(step=step + 1) + ".out"),
             tstep=step + 1,
-            seed=config["seed"],
+            seed=config["seed"] + step,
             end_time=end_time,
             )
 
