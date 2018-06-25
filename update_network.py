@@ -16,12 +16,6 @@ mech_step = int(parse.parse(config["network_file"],
 
 for event in network["events"]:
     if event[1][0] == "birth":
-        print("{}/{}.in".format(
-            config["data_folder"],
-            config["cell_file"].format(
-                step=mech_step,
-                substep=0,
-                cell_id=event[1][1][1])))
         with open("{}/{}.in".format(
             config["data_folder"],
             config["cell_file"].format(
