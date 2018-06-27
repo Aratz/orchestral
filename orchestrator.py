@@ -6,22 +6,21 @@ import string
 import argparse
 import functools
 import subprocess
-from retrying import retry
-from dask.threaded import get
 from dask.diagnostics import ProgressBar
-import logging
 
 parser = argparse.ArgumentParser(description="Orchestral")
 parser.add_argument('-config', help="Config file")
-parser.add_argument('-log', help="Log file")
 parser.add_argument('-dry-run', help="print commands without executing them",
         action='store_true')
 
 args = vars(parser.parse_args())
 
-logging.basicConfig(filename=args['log'],level=logging.DEBUG)
-#ProgressBar().register()
 TIMEOUT = 60
+from distributed import Client
+
+client = Client('localhost:8786')
+get = client.get
+
 
 config_file = args['config']
 with open(config_file, 'r') as f:
@@ -39,15 +38,9 @@ def run_mechanics(input_file, output_file, **kwargs):
 
     return_code = subprocess.call(command_line)
     if return_code:
-        logging.error("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), return_code))
-        raise Exception("DLCM failure")
-    else:
-        logging.debug("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), return_code))
+        raise Exception("DLCM failure: {}".format(command_line))
     return output_file
 
-@retry(stop_max_attempt_number=3)
 def run_cell(input_file, output_file, **kwargs):
     for _ in range(3):
         command_line = config["cell_executable"].format(
@@ -59,26 +52,18 @@ def run_cell(input_file, output_file, **kwargs):
             print(" ".join(command_line))
             return output_file
 
-        proc = subprocess.Popen(command_line,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(command_line)
         try:
-            outs, errs = proc.communicate(timeout=TIMEOUT)
+            returncode = proc.wait(timeout=TIMEOUT)
         except subprocess.TimeoutExpired:
             proc.kill()
-            logging.error("command line: {}\n Timeout".format(
-                ' '.join(command_line)))
             kwargs['seed'] += 1
         else:
             break
     else:
         raise subprocess.TimeoutExpired(command_line, TIMEOUT)
-    if not proc.returncode:
-        logging.debug("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), proc.returncode))
-    else:
-        logging.error("command line: {}\n stdout: {}\n stderr: {}".format(
-            ' '.join(command_line), outs, errs))
-        raise Exception("GFRD failure")
+    if returncode:
+        raise Exception("GFRD failure: {}".format(command_line))
     return output_file
 
 def run_translation_X2S(input_files, output_file, **kwargs):
@@ -94,12 +79,7 @@ def run_translation_X2S(input_files, output_file, **kwargs):
 
     return_code = subprocess.call(command_line)
     if return_code:
-        logging.error("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), return_code))
-        raise Exception("X2S failure")
-    else:
-        logging.debug("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), return_code))
+        raise Exception("X2S failure: {}".format(command_line))
     return output_file
 
 def run_signaling(input_file, output_file, **kwargs):
@@ -114,12 +94,7 @@ def run_signaling(input_file, output_file, **kwargs):
 
     return_code = subprocess.call(command_line)
     if return_code:
-        logging.error("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), return_code))
-        raise Exception("Signaling failure")
-    else:
-        logging.debug("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), return_code))
+        raise Exception("Signaling failure: {}".format(command_line))
     return output_file
 
 def run_translation_S2X(target_cell_output_file, signaling_files, output_file, **kwargs):
@@ -136,12 +111,7 @@ def run_translation_S2X(target_cell_output_file, signaling_files, output_file, *
 
     return_code = subprocess.call(command_line)
     if return_code:
-        logging.error("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), return_code))
-        raise Exception("S2X failure")
-    else:
-        logging.debug("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), return_code))
+        raise Exception("S2X failure: {}".format(command_line))
     return output_file
 
 def generate_network_input(network_output, network_input, **kwargs):
@@ -157,11 +127,7 @@ def generate_network_input(network_output, network_input, **kwargs):
 
     return_code = subprocess.call(command_line)
     if return_code:
-        logging.error("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), return_code))
-        raise Exception("network_input failure")
-    logging.debug("command line: {}\nreturn code: {}".format(
-        ' '.join(command_line), return_code))
+        raise Exception("network_input failure: {}".format(command_line))
     return network_input
 
 def update_network(network_output):
@@ -176,11 +142,7 @@ def update_network(network_output):
 
     return_code = subprocess.call(command_line)
     if return_code:
-        logging.error("command line: {}\nreturn code: {}".format(
-            ' '.join(command_line), return_code))
-        raise Exception("update_network failure")
-    logging.debug("command line: {}\nreturn code: {}".format(
-        ' '.join(command_line), return_code))
+        raise Exception("update_network failure: {}".format(command_line))
     return
 
 
