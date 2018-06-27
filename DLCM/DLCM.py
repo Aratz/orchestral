@@ -6,8 +6,8 @@ import numpy.random as npr
 
 D0 = 10.
 D1 = 1.
-BIRTH_RATE = 1.
-DEATH_RATE = 0.01
+BIRTH_RATE = 1./24.
+DEATH_RATE = 0.
 
 
 parser = argparse.ArgumentParser(description="Simulate cell mechanics and division")
@@ -160,7 +160,6 @@ while t < end_time and data:
         break
 
     event_list.append((t, r))
-    print(t, r[0])
     if r[0] == 'birth':
         new_id = r[1][1]
         data[new_id] = data[r[1][0]].copy()
