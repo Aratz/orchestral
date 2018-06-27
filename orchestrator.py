@@ -39,7 +39,7 @@ def run_mechanics(input_file, output_file, **kwargs):
 
     return_code = subprocess.call(command_line)
     if return_code:
-        raise Exception("DLCM failure: {}".format(command_line))
+        raise Exception("DLCM failure: {}".format(" ".join(command_line)))
     return output_file
 
 @retry(stop_max_attempt_number=3)
@@ -65,7 +65,7 @@ def run_cell(input_file, output_file, **kwargs):
     else:
         raise subprocess.TimeoutExpired(command_line, TIMEOUT)
     if returncode:
-        raise Exception("GFRD failure: {}".format(command_line))
+        raise Exception("GFRD failure: {}".format(" ".join(command_line)))
     return output_file
 
 def run_translation_X2S(input_files, output_file, **kwargs):
@@ -81,7 +81,7 @@ def run_translation_X2S(input_files, output_file, **kwargs):
 
     return_code = subprocess.call(command_line)
     if return_code:
-        raise Exception("X2S failure: {}".format(command_line))
+        raise Exception("X2S failure: {}".format(" ".join(command_line)))
     return output_file
 
 def run_signaling(input_file, output_file, **kwargs):
@@ -96,7 +96,7 @@ def run_signaling(input_file, output_file, **kwargs):
 
     return_code = subprocess.call(command_line)
     if return_code:
-        raise Exception("Signaling failure: {}".format(command_line))
+        raise Exception("Signaling failure: {}".format(" ".join(command_line)))
     return output_file
 
 def run_translation_S2X(target_cell_output_file, signaling_files, output_file, **kwargs):
@@ -113,7 +113,7 @@ def run_translation_S2X(target_cell_output_file, signaling_files, output_file, *
 
     return_code = subprocess.call(command_line)
     if return_code:
-        raise Exception("S2X failure: {}".format(command_line))
+        raise Exception("S2X failure: {}".format(" ".join(command_line)))
     return output_file
 
 def generate_network_input(network_output, network_input, **kwargs):
@@ -129,7 +129,7 @@ def generate_network_input(network_output, network_input, **kwargs):
 
     return_code = subprocess.call(command_line)
     if return_code:
-        raise Exception("network_input failure: {}".format(command_line))
+        raise Exception("network_input failure: {}".format(" ".join(command_line)))
     return network_input
 
 def update_network(network_output):
@@ -144,7 +144,7 @@ def update_network(network_output):
 
     return_code = subprocess.call(command_line)
     if return_code:
-        raise Exception("update_network failure: {}".format(command_line))
+        raise Exception("update_network failure: {}".format(" ".join(command_line)))
     return
 
 
