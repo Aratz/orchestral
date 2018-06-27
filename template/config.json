@@ -6,7 +6,7 @@
     "translation_S2X":"python3 /home/adrien/Documents/Orchestral/translation_S2X.py {config_file} {network_file} {target_cell_output_file} {signaling_files} {target_cell_input_file}",
     "generate_network_input":"python3 /home/adrien/Documents/Orchestral/translation_F.py {config_file} {network_output} {network_input}",
     "update_network":"python3 /home/adrien/Documents/Orchestral/update_network.py {config_file} {network_output}",
-    "data_folder":"/home/adrien/Documents/Orchestral/example/data/",
+    "data_folder":"/home/adrien/Documents/Orchestral/template/data/",
     "cell_file":"cell-{step}.{substep}-{cell_id}",
     "signaling_file":"signaling-{step}.{substep}-{signaling_id}",
     "network_file":"network-{step}",
