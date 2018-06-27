@@ -1,0 +1,18 @@
+{
+    "cell_executable": "/home/adrien/Documents/Orchestral/modern_egfrd/build/bin/RunGfrd --custom -seed {seed} -e {end_time} -wsize {wsize} -in {input_file} -out {output_file}",
+    "signaling_executable": "python3 /home/adrien/Documents/Orchestral/signaling/signaling.py -seed {seed} -e {end_time} -in {input_file} -out {output_file}",
+    "mechanics_executable":"python3 DLCM/DLCM.py -seed {seed} -e {end_time} -tstep {tstep} -in {input_file} -out {output_file}",
+    "translation_X2S":"python3 /home/adrien/Documents/Orchestral/translation_X2S.py {config_file} {network_file} {cell_output_files} {signaling_input_file}",
+    "translation_S2X":"python3 /home/adrien/Documents/Orchestral/translation_S2X.py {config_file} {network_file} {target_cell_output_file} {signaling_files} {target_cell_input_file}",
+    "generate_network_input":"python3 /home/adrien/Documents/Orchestral/translation_F.py {config_file} {network_output} {network_input}",
+    "update_network":"python3 /home/adrien/Documents/Orchestral/update_network.py {config_file} {network_output}",
+    "data_folder":"/home/adrien/Documents/Orchestral/example/data/",
+    "cell_file":"cell-{step}.{substep}-{cell_id}",
+    "signaling_file":"signaling-{step}.{substep}-{signaling_id}",
+    "network_file":"network-{step}",
+    "n_mech_steps":150,
+    "n_kin_substeps":10,
+    "simulation_time":150,
+    "cell_types":{"1":{"epsilon": 0.1, "wsize": 1e-05}},
+    "seed":1
+}
