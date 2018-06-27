@@ -6,6 +6,7 @@ import string
 import argparse
 import functools
 import subprocess
+from retrying import retry
 from dask.diagnostics import ProgressBar
 
 parser = argparse.ArgumentParser(description="Orchestral")
@@ -41,6 +42,7 @@ def run_mechanics(input_file, output_file, **kwargs):
         raise Exception("DLCM failure: {}".format(command_line))
     return output_file
 
+@retry(stop_max_attempt_number=3)
 def run_cell(input_file, output_file, **kwargs):
     for _ in range(3):
         command_line = config["cell_executable"].format(
