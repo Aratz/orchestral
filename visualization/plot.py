@@ -65,6 +65,9 @@ for mech_step in range(config["n_mech_steps"]):
         plt.scatter(x.astype(float), y.astype(float), s=s.astype(float), c=c, alpha=0.3)
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
+        plt.title("{h:3d}h{m:02d}m".format(h=mech_step, m=int(round(kin_step*60./config["n_kin_substeps"]))))
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.savefig("{}/{}.png".format(
             output_folder,
             "network-{}".format(kin_step+mech_step*config["n_kin_substeps"])))
