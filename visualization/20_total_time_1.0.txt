@@ -1,0 +1,40 @@
+
+real	2m18.038s
+user	40m56.336s
+sys	1m51.735s
+3413679
+
+real	2m18.621s
+user	40m56.124s
+sys	1m52.484s
+3413672
+
+real	2m19.792s
+user	40m55.278s
+sys	1m52.528s
+3413683
+
+real	2m20.416s
+user	40m52.628s
+sys	1m51.265s
+3413676
+
+real	2m20.550s
+user	40m52.268s
+sys	1m51.612s
+3413689
+
+real	2m20.433s
+user	40m55.592s
+sys	1m52.497s
+3413674
+
+real	2m21.982s
+user	40m53.996s
+sys	1m53.211s
+3413686
+
+real	2m23.266s
+user	40m57.141s
+sys	1m53.263s
+3413669
