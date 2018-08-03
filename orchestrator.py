@@ -20,7 +20,7 @@ parser.add_argument('-dry-run', help="print commands without executing them",
 args = vars(parser.parse_args())
 
 logging.basicConfig(filename=args['log'],level=logging.DEBUG)
-#ProgressBar().register()
+ProgressBar().register()
 TIMEOUT = 60
 
 config_file = args['config']
