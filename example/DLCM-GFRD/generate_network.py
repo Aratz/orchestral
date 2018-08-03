@@ -16,17 +16,15 @@ size = config["cell_types"]["1"]["wsize"]
 final = { hash(0, hash(n_x, n_y)):{
     "seed":hash(0, hash(n_x, n_y)),
     "type":"1",
-    "position": [(n_x//2)*size, n_y*size, 0.0],
+    "position": [n_x*size, n_y*size, 0.0],
     **(config["cell_types"]["1"])
     }
-    for n_x in range(2*N) for n_y in range(N)}
+    for n_x in range(N) for n_y in range(N)}
 
 signaling = [
     sorted([
-        str(hash(0, hash(2*n_x, n_y))),
-        str(hash(0, hash(2*(n_x + dx), n_y + dy))),
-        str(hash(0, hash(2*n_x + 1, n_y))),
-        str(hash(0, hash(2*(n_x + dx) + 1, n_y + dy))),
+        str(hash(0, hash(n_x, n_y))),
+        str(hash(0, hash(n_x + dx, n_y + dy))),
         ])
         for n_x in range(N) for n_y in range(N)
         for dx, dy in [(1, 0), (0, 1),]
